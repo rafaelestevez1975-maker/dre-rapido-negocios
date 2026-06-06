@@ -1,0 +1,24 @@
+{
+  "name": "DRE Rápido — Negócios",
+  "short_name": "DRE Rápido",
+  "description": "Simule a viabilidade financeira do seu negócio em 5 passos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#16a34a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

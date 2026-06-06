@@ -1,15 +1,21 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    }
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "manifest.json", "use": "@vercel/static" },
+    { "src": "sw.js", "use": "@vercel/static" },
+    { "src": "icons/**", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/sw.js", "dest": "/sw.js" },
+    { "src": "/manifest.json", "dest": "/manifest.json" },
+    { "src": "/icons/(.*)", "dest": "/icons/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "headers": [
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/sw.js",
+      "headers": [{ "key": "Service-Worker-Allowed", "value": "/" }]
     }
   ]
 }
