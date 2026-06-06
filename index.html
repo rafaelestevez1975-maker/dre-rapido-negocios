@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRE Rápido — Negócios</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --dark: #0f172a;
+    --sidebar: #111827;
+  }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; }
+  .sidebar { background: var(--sidebar); min-height: 100vh; }
+  .nav-item { @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm cursor-pointer transition-all; color: #94a3b8; }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+  .nav-item.active { background: var(--green); color: #fff; }
+  .step-bar { height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
+  .step-fill { height: 100%; background: var(--green); border-radius: 99px; transition: width 0.4s; }
+  .card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; }
+  .input-field { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; font-size: 14px; width: 100%; outline: none; transition: border-color 0.2s; background: #fff; }
+  .input-field:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,0.1); }
+  .input-prefix { position: relative; }
+  .input-prefix::before { content: attr(data-prefix); position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 13px; z-index: 1; }
+  .input-prefix input { padding-left: 36px; }
+  .btn-primary { background: var(--green); color: #fff; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; border: none; display: flex; align-items: center; gap: 6px; }
+  .btn-primary:hover { background: #15803d; }
+  .btn-secondary { background: #fff; color: #374151; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+  .btn-secondary:hover { background: #f1f5f9; }
+  .badge-green { background: #dcfce7; color: #16a34a; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+  .badge-red { background: #fee2e2; color: #dc2626; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+  .tooltip { position: relative; }
+  .tooltip .tip { visibility: hidden; opacity: 0; background: #1e293b; color: #fff; font-size: 12px; border-radius: 8px; padding: 8px 12px; position: absolute; z-index: 50; width: 220px; bottom: 130%; left: 50%; transform: translateX(-50%); transition: opacity 0.2s; line-height: 1.5; }
+  .tooltip:hover .tip { visibility: visible; opacity: 1; }
+  .dre-row { display: grid; grid-template-columns: 1fr 80px 130px; gap: 8px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; align-items: center; }
+  .dre-row.bold { font-weight: 700; background: #f8fafc; border-radius: 8px; padding: 12px 10px; }
+  .dre-row.highlight { background: #dcfce7; border-radius: 8px; padding: 12px 10px; }
+  .section-title { font-size: 18px; font-weight: 700; color: #0f172a; }
+  .section-sub { font-size: 13px; color: #64748b; margin-top: 2px; }
+  select.input-field { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+  .toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; border-radius: 24px; transition: 0.3s; }
+  .toggle-slider:before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+  input:checked + .toggle-slider { background: var(--green); }
+  input:checked + .toggle-slider:before { transform: translateX(20px); }
+  .scenario-tag { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+  .scenario-tag.active { background: #dcfce7; border-color: #86efac; color: #16a34a; font-weight: 600; }
+  .bottom-bar { position: fixed; bottom: 0; left: 240px; right: 0; background: #fff; border-top: 1px solid #e2e8f0; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 40; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .fade-in { animation: fadeIn 0.3s ease; }
+  .project-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; background: #fff; cursor: pointer; transition: all 0.2s; }
+  .project-card:hover { border-color: #86efac; box-shadow: 0 4px 16px rgba(22,163,74,0.1); }
+  .type-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s; text-align: center; background: #fff; }
+  .type-card:hover, .type-card.selected { border-color: var(--green); background: #f0fdf4; }
+  .result-kpi { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; }
+  .result-kpi.highlight { border-left: 4px solid var(--green); }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  .compare-col { border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; background: #fff; flex: 1; min-width: 200px; }
+  .obs-input { font-size: 12px; color: #64748b; background: none; border: none; outline: none; cursor: pointer; }
+  .obs-input:focus { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 2px 4px; }
+  .limit-badge { font-size: 11px; background: #fef3c7; color: #92400e; border-radius: 4px; padding: 1px 6px; font-weight: 600; }
+</style>
+</head>
+<body class="bg-slate-50">
+
+<div class="flex" style="min-height:100vh">
+
+<!-- SIDEBAR -->
+<aside class="sidebar w-60 flex-shrink-0 flex flex-col" style="position:fixed;top:0;left:0;bottom:0;z-index:50">
+  <div class="px-5 py-5 border-b border-white/10">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--green)">
+        <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg>
+      </div>
+      <div>
+        <div class="text-white font-bold text-sm leading-tight">DRE Rápido</div>
+        <div class="text-xs" style="color:#64748b">Negócios</div>
+      </div>
+    </div>
+  </div>
+  <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+    <div class="text-xs font-semibold px-3 py-2 uppercase tracking-wider" style="color:#475569">Menu</div>
+    <div class="nav-item active" id="nav-home" onclick="showPage('home')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Início
+    </div>
+    <div class="nav-item" id="nav-sim" onclick="showPage('sim')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Nova Simulação
+    </div>
+    <div class="nav-item" id="nav-projects" onclick="showPage('projects')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      Meus Projetos
+    </div>
+    <div class="nav-item" id="nav-compare" onclick="showPage('compare')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      Comparar
+    </div>
+  </nav>
+  <div class="p-3">
+    <div class="text-xs text-center" style="color:#334155">v2.0 — DRE Rápido</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="flex-1 ml-60 pb-24">
+
+<!-- PAGE: HOME -->
+<div id="page-home" class="fade-in p-8">
+  <h1 class="text-2xl font-bold text-slate-900">Bem-vindo ao DRE Rápido</h1>
+  <p class="text-slate-500 mt-1">Selecione o tipo de negócio para começar uma nova simulação financeira.</p>
+
+  <div class="grid grid-cols-4 gap-4 mt-8">
+    <div class="type-card" onclick="startSim('padrao')">
+      <div class="text-3xl mb-3">🏢</div>
+      <div class="font-semibold text-slate-800">Padrão</div>
+      <div class="text-xs text-slate-500 mt-1">Estrutura genérica para qualquer negócio.</div>
+    </div>
+    <div class="type-card" onclick="startSim('servicos')">
+      <div class="text-3xl mb-3">💼</div>
+      <div class="font-semibold text-slate-800">Serviços</div>
+      <div class="text-xs text-slate-500 mt-1">Clínicas, agências e consultorias.</div>
+    </div>
+    <div class="type-card" onclick="startSim('varejo')">
+      <div class="text-3xl mb-3">🛍️</div>
+      <div class="font-semibold text-slate-800">Varejo</div>
+      <div class="text-xs text-slate-500 mt-1">Lojas físicas e e-commerce.</div>
+    </div>
+    <div class="type-card" onclick="startSim('alimentacao')">
+      <div class="text-3xl mb-3">🍽️</div>
+      <div class="font-semibold text-slate-800">Alimentação</div>
+      <div class="text-xs text-slate-500 mt-1">Restaurantes, bares e delivery.</div>
+    </div>
+  </div>
+
+  <!-- Recent Projects -->
+  <div class="mt-10">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-semibold text-slate-800">Projetos Recentes</h2>
+      <button class="text-sm text-green-600 font-medium" onclick="showPage('projects')">Ver todos →</button>
+    </div>
+    <div id="home-recent"></div>
+  </div>
+</div>
+
+<!-- PAGE: SIMULATION -->
+<div id="page-sim" class="hidden">
+  <!-- Progress bar -->
+  <div class="bg-white border-b border-slate-200 px-8 py-4 sticky top-0 z-30">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-sm font-medium text-slate-600" id="step-label">Passo 1 de 5</span>
+      <span class="text-sm font-medium text-green-600" id="step-pct">20% Concluído</span>
+    </div>
+    <div class="step-bar"><div class="step-fill" id="step-fill" style="width:20%"></div></div>
+
+    <!-- Quick-nav steps -->
+    <div class="flex gap-2 mt-3">
+      <button class="scenario-tag active" id="snav-1" onclick="goStep(1)">1. Receitas</button>
+      <button class="scenario-tag" id="snav-2" onclick="goStep(2)">2. Custos Var.</button>
+      <button class="scenario-tag" id="snav-3" onclick="goStep(3)">3. Folha</button>
+      <button class="scenario-tag" id="snav-4" onclick="goStep(4)">4. Fixos</button>
+      <button class="scenario-tag" id="snav-5" onclick="goStep(5)">5. Resumo</button>
+    </div>
+  </div>
+
+  <div class="p-8 fade-in">
+
+    <!-- STEP 1 -->
+    <div id="step-1">
+      <div class="card p-6 mb-4">
+        <div class="section-title">Identificação do Projeto</div>
+        <div class="section-sub">Dê um nome e defina a área de atuação para sua simulação.</div>
+        <div class="grid grid-cols-3 gap-4 mt-5">
+          <div>
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Nome do Projeto <span class="text-red-500">*</span></label>
+            <input class="input-field" id="proj-name" placeholder="Ex: Clínica Estética SP" oninput="calcAll()">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Área de Atuação <span class="text-red-500">*</span></label>
+            <input class="input-field" id="proj-area" placeholder="Ex: Estética avançada" oninput="calcAll()">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Investimento Total (CAPEX)</label>
+            <div class="input-prefix" data-prefix="R$"><input class="input-field" id="capex" type="number" placeholder="0" oninput="calcAll()"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-6 mb-4">
+        <div class="section-title">Receitas Múltiplas</div>
+        <div class="section-sub">Estime o faturamento detalhando linhas de produtos, dias operacionais e ticket médio.</div>
+        <div class="mt-4" id="revenue-lines"></div>
+        <div class="text-right mt-2">
+          <button class="btn-secondary text-sm" onclick="addRevenueLine()">+ Adicionar Linha de Venda</button>
+        </div>
+        <div class="flex justify-between items-center mt-4 bg-slate-50 rounded-xl p-4">
+          <span class="font-semibold text-slate-700">Faturamento Bruto Total Estimado</span>
+          <span class="text-xl font-bold text-slate-900" id="fat-total">R$ 0,00</span>
+        </div>
+      </div>
+
+      <div class="card p-6">
+        <div class="section-title">Impostos e Taxas</div>
+        <div class="section-sub">Defina o regime tributário e a taxa de cartão.</div>
+        <div class="grid grid-cols-2 gap-4 mt-5">
+          <div>
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Regime Tributário</label>
+            <select class="input-field" id="regime" onchange="calcAll()">
+              <option value="simples">Simples Nacional</option>
+              <option value="lucro_presumido">Lucro Presumido</option>
+              <option value="mei">MEI</option>
+              <option value="custom">Personalizado</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Taxa Média Cartão (%)</label>
+            <input class="input-field" id="taxa-cartao" type="number" value="2" step="0.1" oninput="calcAll()">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Atividade Principal (Anexo do Simples)</label>
+            <select class="input-field" id="anexo" onchange="calcAll()">
+              <option value="I">Comércio (Anexo I)</option>
+              <option value="II">Indústria (Anexo II)</option>
+              <option value="III" selected>Serviços em Geral (Anexo III)</option>
+              <option value="IV">Serviços específicos (Anexo IV)</option>
+              <option value="V">Serviços técnicos (Anexo V)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Receita Acumulada 12m (RBT12) — Opcional</label>
+            <div class="input-prefix" data-prefix="R$"><input class="input-field" id="rbt12" type="number" placeholder="Deixe em branco para projeção anual" oninput="calcAll()"></div>
+          </div>
+          <div id="aliq-wrap">
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Alíquota Efetiva de Imposto (%)</label>
+            <div class="flex items-center gap-2">
+              <input class="input-field" id="aliquota" type="number" step="0.01" oninput="calcAll()" style="max-width:120px">
+              <span class="text-xs text-slate-400">calculada automaticamente pelo Simples</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div id="step-2" class="hidden">
+      <div class="card p-6 mb-4">
+        <div class="section-title">Custos Variáveis, Franquias e Bônus</div>
+        <div class="section-sub">Especifique os custos diretos categorizados e despesas proporcionais à venda.</div>
+
+        <div class="mt-5 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <div class="font-semibold text-amber-800 text-sm">Outros Custos de Mercadorias e Insumos (CMV Manual)</div>
+          <div class="text-xs text-amber-600 mt-1">(Custos vinculados diretamente às receitas são calculados automaticamente. Adicione aqui outros custos variáveis manuais)</div>
+          <div class="mt-3" id="cmv-lines"></div>
+          <button class="btn-secondary text-xs mt-2" onclick="addCMVLine()">+ Adicionar Categoria</button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mt-6">
+          <div>
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1 tooltip">
+              Royalties de Franquia (%) <span class="tip">Percentual sobre receita bruta pago à franqueadora mensalmente.</span>
+            </label>
+            <div class="flex items-center gap-2">
+              <input class="input-field" id="royalties" type="number" value="0" step="0.1" oninput="calcAll()">
+              <span class="text-slate-400 text-sm">%</span>
+            </div>
+            <div class="text-xs text-slate-400 mt-1">% sobre a receita bruta</div>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1 tooltip">
+              Fundo de Propaganda (%) <span class="tip">Taxa coletiva para campanhas de marketing da rede franqueada.</span>
+            </label>
+            <div class="flex items-center gap-2">
+              <input class="input-field" id="fundo-prop" type="number" value="0" step="0.1" oninput="calcAll()">
+              <span class="text-slate-400 text-sm">%</span>
+            </div>
+            <div class="text-xs text-slate-400 mt-1">% sobre a receita bruta</div>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1 tooltip">
+              Premiação / Comissões (%) <span class="tip">Bônus pago à equipe de vendas sobre o faturamento repassado.</span>
+            </label>
+            <div class="flex items-center gap-2">
+              <input class="input-field" id="comissoes" type="number" value="0" step="0.1" oninput="calcAll()">
+              <span class="text-slate-400 text-sm">%</span>
+            </div>
+            <div class="text-xs text-slate-400 mt-1">% sobre a receita repassada ao time</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div id="step-3" class="hidden">
+      <div class="card p-6">
+        <div class="section-title">Folha de Pagamento</div>
+        <div class="section-sub">Custos com funcionários, incluindo provisões trabalhistas.</div>
+        <div class="grid grid-cols-2 gap-6 mt-5">
+          <div>
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Soma dos Salários Líquidos / Pró-labore</label>
+            <div class="input-prefix" data-prefix="R$"><input class="input-field" id="salarios" type="number" placeholder="0" oninput="calcAll()"></div>
+            <div class="text-xs text-slate-400 mt-1">Informe o total líquido de todos os colaboradores</div>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1 tooltip">
+              Multiplicador de Encargos Sociais e Benefícios
+              <span class="tip">Multiplica o salário base para estimar o custo real incluindo FGTS, férias, 13º, INSS, VT, VR etc.</span>
+            </label>
+            <select class="input-field" id="multiplicador" onchange="calcAll()">
+              <option value="1.0">Apenas Pró-labore / Autônomo — 1.0x</option>
+              <option value="1.3">Simples (VT + VR básico) — 1.3x</option>
+              <option value="1.7" selected>CLT Padrão (Férias/13º/FGTS) — 1.7x</option>
+              <option value="2.0">CLT + Benefícios Completos — 2.0x</option>
+              <option value="2.5">CLT + Plano Saúde + Bônus — 2.5x</option>
+            </select>
+            <div class="text-xs text-slate-400 mt-1" id="custo-total-folha">Custo Total Projetado: R$ 0,00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div id="step-4" class="hidden">
+      <div class="card p-6 mb-4">
+        <div class="section-title">Custos Fixos e Operacionais</div>
+        <div class="section-sub">Despesas detalhadas que não variam diretamente com o volume de vendas.</div>
+        <div class="grid grid-cols-2 gap-6 mt-5">
+
+          <!-- Aluguel -->
+          <div class="border border-slate-200 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="font-semibold text-sm text-slate-700">Aluguel e Ocupação</div>
+              <label class="toggle"><input type="checkbox" id="shopping-toggle" onchange="calcAll()"><span class="toggle-slider"></span></label>
+              <span class="text-xs text-slate-500 ml-2">Loja de Shopping</span>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 block mb-1">Aluguel Mensal</label>
+              <div class="input-prefix" data-prefix="R$"><input class="input-field" id="aluguel" type="number" placeholder="0" oninput="calcAll()"></div>
+            </div>
+            <div id="shopping-extras" class="hidden mt-3 space-y-2">
+              <div>
+                <label class="text-xs text-slate-500 block mb-1">Condomínio do Shopping</label>
+                <div class="input-prefix" data-prefix="R$"><input class="input-field" id="condo" type="number" placeholder="0" oninput="calcAll()"></div>
+              </div>
+              <div>
+                <label class="text-xs text-slate-500 block mb-1">Fundo de Promoção (%)</label>
+                <input class="input-field" id="fundo-shopping" type="number" value="0" step="0.1" oninput="calcAll()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Ativos -->
+          <div class="border border-slate-200 rounded-xl p-4">
+            <div class="font-semibold text-sm text-slate-700 mb-3">Ativos e Manutenção</div>
+            <div>
+              <label class="text-xs text-slate-500 block mb-1">Financiamento de Máquinas e Equipamentos</label>
+              <div class="input-prefix" data-prefix="R$"><input class="input-field" id="financiamento" type="number" placeholder="0" oninput="calcAll()"></div>
+            </div>
+            <div class="mt-2">
+              <label class="text-xs text-slate-500 block mb-1">Manutenção Mensal</label>
+              <div class="input-prefix" data-prefix="R$"><input class="input-field" id="manutencao" type="number" placeholder="0" oninput="calcAll()"></div>
+            </div>
+          </div>
+
+          <!-- Despesas Operacionais -->
+          <div class="border border-slate-200 rounded-xl p-4 col-span-2">
+            <div class="font-semibold text-sm text-slate-700 mb-2">Despesas Operacionais Detalhadas</div>
+            <div class="text-xs text-slate-500 mb-3">Preencha um valor fixo ou uma porcentagem atrelada ao faturamento.</div>
+            <div class="grid grid-cols-2 gap-4">
+              <div id="op-expenses"></div>
+              <div id="op-expenses2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 — RESUMO -->
+    <div id="step-5" class="hidden">
+      <div class="card p-6">
+        <div class="section-title">Resumo do DRE</div>
+        <div class="section-sub">Confira antes de ver o resultado completo.</div>
+        <div class="mt-6" id="dre-preview"></div>
+        <div class="mt-4 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
+          <span class="text-green-600 text-xl">✓</span>
+          <span class="text-sm text-green-700 font-medium">Tudo pronto! Clique em <strong>Ver Resultado</strong> para ver a análise detalhada e o fluxo do dinheiro.</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /p-8 -->
+
+  <!-- Step navigation -->
+  <div class="bottom-bar">
+    <div class="flex items-center gap-3">
+      <button class="btn-secondary" onclick="goStep(1)">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+        Início (CAPEX)
+      </button>
+      <button class="btn-secondary" id="btn-prev" onclick="prevStep()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Anterior
+      </button>
+    </div>
+    <div class="flex items-center gap-6">
+      <div>
+        <div class="text-xs text-slate-500">Lucro Líquido</div>
+        <div class="font-bold text-green-600 text-lg" id="bar-lucro">R$ 0,00</div>
+      </div>
+      <div>
+        <div class="text-xs text-slate-500">Ponto de Equilíbrio</div>
+        <div class="font-bold text-slate-800 text-base" id="bar-pe">R$ 0,00</div>
+      </div>
+      <button class="btn-secondary" onclick="saveProject()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Salvar
+      </button>
+      <button class="btn-primary" id="btn-next" onclick="nextStep()">
+        Próximo
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: RESULT -->
+<div id="page-result" class="hidden p-8 fade-in">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900" id="result-title">Resultado</h1>
+      <p class="text-slate-500 text-sm mt-1" id="result-subtitle"></p>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn-secondary" onclick="showPage('sim')">← Editar</button>
+      <button class="btn-primary" onclick="exportPDF()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Cenários rápidos -->
+  <div class="flex gap-2 mb-6">
+    <span class="text-sm text-slate-500 mr-1 self-center">Cenário:</span>
+    <button class="scenario-tag active" onclick="applyScenario(0,this)">Projetado</button>
+    <button class="scenario-tag" onclick="applyScenario(-10,this)">-10% receita</button>
+    <button class="scenario-tag" onclick="applyScenario(-20,this)">-20% receita</button>
+    <button class="scenario-tag" onclick="applyScenario(+10,this)">+10% receita</button>
+    <button class="scenario-tag" onclick="applyScenario(+20,this)">+20% receita</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="result-kpi highlight">
+      <div class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Lucro Líquido Mensal</div>
+      <div class="text-3xl font-bold text-green-600 mt-1" id="kpi-lucro">R$ 0,00</div>
+      <div class="text-sm text-slate-500 mt-1" id="kpi-margem"></div>
+    </div>
+    <div class="result-kpi">
+      <div class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Margem Líquida</div>
+      <div class="text-3xl font-bold text-slate-800 mt-1" id="kpi-marg">0%</div>
+      <div class="text-xs text-slate-400 mt-1">A cada R$ 100 vendidos, sobram R$ X</div>
+    </div>
+    <div class="result-kpi">
+      <div class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Ponto de Equilíbrio</div>
+      <div class="text-3xl font-bold text-slate-800 mt-1" id="kpi-pe">R$ 0,00</div>
+      <div class="text-xs text-slate-400 mt-1">Faturamento necessário para não ter prejuízo</div>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-4 mb-6">
+    <div class="result-kpi">
+      <div class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Payback Estimado</div>
+      <div class="text-2xl font-bold text-blue-600 mt-1" id="kpi-payback">—</div>
+      <div class="text-xs text-slate-400 mt-1">Retorno do investimento inicial (CAPEX)</div>
+    </div>
+    <div class="result-kpi">
+      <div class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Margem de Contribuição</div>
+      <div class="text-2xl font-bold text-slate-800 mt-1" id="kpi-mc">R$ 0,00</div>
+      <div class="text-xs text-slate-400 mt-1" id="kpi-mc-pct"></div>
+    </div>
+  </div>
+
+  <!-- DRE Detalhado + Gráfico -->
+  <div class="grid grid-cols-3 gap-6 mb-6">
+    <div class="card p-6 col-span-2">
+      <h2 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Detalhamento do Resultado
+      </h2>
+      <div id="dre-detail"></div>
+    </div>
+    <div class="card p-6">
+      <h2 class="font-bold text-slate-800 mb-2">Fluxo do Dinheiro</h2>
+      <div class="text-xs text-slate-400 mb-4">Para onde vai sua receita</div>
+      <canvas id="donut-chart" height="220"></canvas>
+      <div id="chart-legend" class="mt-4 space-y-1"></div>
+    </div>
+  </div>
+
+  <!-- Payback chart -->
+  <div class="card p-6" id="payback-section">
+    <h2 class="font-bold text-slate-800 mb-4">Projeção de Payback</h2>
+    <canvas id="payback-chart" height="120"></canvas>
+  </div>
+</div>
+
+<!-- PAGE: PROJECTS -->
+<div id="page-projects" class="hidden p-8 fade-in">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Meus Projetos</h1>
+      <p class="text-slate-500 text-sm mt-1">Todos os seus projetos salvos.</p>
+    </div>
+    <button class="btn-primary" onclick="startSim('padrao')">+ Nova Simulação</button>
+  </div>
+  <div id="projects-list"></div>
+</div>
+
+<!-- PAGE: COMPARE -->
+<div id="page-compare" class="hidden p-8 fade-in">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Comparar Projetos</h1>
+      <p class="text-slate-500 text-sm mt-1">Analise múltiplos cenários lado a lado.</p>
+    </div>
+  </div>
+  <div id="compare-content"></div>
+</div>
+
+</main>
+</div>
+
+<script>
+// ==================== STATE ====================
+let currentStep = 1;
+let currentScenarioPct = 0;
+let donutChart = null;
+let paybackChart = null;
+
+const PRESETS = {
+  padrao:    { cmv: 20, royalties: 0, vendas: 10, ticket: 200, dias: 22 },
+  servicos:  { cmv: 10, royalties: 0, vendas: 8,  ticket: 250, dias: 20 },
+  varejo:    { cmv: 35, royalties: 0, vendas: 25, ticket: 150, dias: 26 },
+  alimentacao:{ cmv: 32, royalties: 0, vendas: 60, ticket: 50,  dias: 26 },
+};
+
+const SIMPLES_TABELA = {
+  III: [
+    [180000, 6.0, 0], [360000, 11.2, 9360], [720000, 13.5, 17640],
+    [1800000, 16.0, 35640], [3600000, 21.0, 125640], [4800000, 33.0, 648000],
+  ]
+};
+
+let revenues = [];
+let cmvLines = [];
+
+const OP_EXPENSES_LEFT = [
+  { id: 'desp-bancaria', label: 'Despesas Bancárias (Taxas/Cestas)' },
+  { id: 'contador',      label: 'Contador / Honorários' },
+  { id: 'marketing',     label: 'Marketing e Publicidade' },
+];
+const OP_EXPENSES_RIGHT = [
+  { id: 'contas-basicas', label: 'Contas Básicas (Água, Luz, Internet)' },
+  { id: 'outros-fixos',   label: 'Outros Custos Fixos Diversos' },
+  { id: 'seguros',        label: 'Seguros e Taxas Diversas' },
+];
+
+// ==================== INIT ====================
+function init() {
+  renderOpExpenses();
+  addRevenueLine();
+  addCMVLine();
+  renderHomeRecent();
+}
+
+function renderOpExpenses() {
+  const render = (arr) => arr.map(e => `
+    <div class="mb-3">
+      <div class="text-xs font-semibold text-slate-600 mb-1">${e.label}</div>
+      <div class="flex gap-2 items-center">
+        <div class="input-prefix" data-prefix="R$" style="flex:1"><input class="input-field" id="${e.id}-fix" type="number" value="0" placeholder="0,00" oninput="calcAll()"></div>
+        <span class="text-xs text-slate-400">ou</span>
+        <div class="flex items-center gap-1" style="flex:0.6">
+          <input class="input-field" id="${e.id}-pct" type="number" value="0" step="0.1" oninput="calcAll()" style="max-width:70px">
+          <span class="text-xs text-slate-400">%</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('op-expenses').innerHTML = render(OP_EXPENSES_LEFT);
+  document.getElementById('op-expenses2').innerHTML = render(OP_EXPENSES_RIGHT);
+}
+
+// ==================== REVENUE LINES ====================
+function addRevenueLine(preset = {}) {
+  const idx = revenues.length;
+  revenues.push({ id: idx });
+  const wrap = document.getElementById('revenue-lines');
+  const div = document.createElement('div');
+  div.id = `rev-line-${idx}`;
+  div.className = 'border border-slate-200 rounded-xl p-4 mb-3';
+  div.innerHTML = `
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-semibold text-slate-500">Linha de Venda ${idx + 1}</span>
+      ${idx > 0 ? `<button class="text-xs text-red-400 hover:text-red-600" onclick="removeRevLine(${idx})">✕ Remover</button>` : ''}
+    </div>
+    <div class="grid grid-cols-5 gap-2">
+      <div class="col-span-2">
+        <label class="text-xs text-slate-400 block mb-1">Produto / Serviço</label>
+        <input class="input-field" id="rev-desc-${idx}" placeholder="Ex: Consulta" oninput="calcAll()">
+      </div>
+      <div>
+        <label class="text-xs text-slate-400 block mb-1">Vendas/Dia</label>
+        <input class="input-field" id="rev-qtt-${idx}" type="number" value="${preset.vendas||10}" oninput="calcAll()">
+      </div>
+      <div>
+        <label class="text-xs text-slate-400 block mb-1">Dias Op./Mês</label>
+        <input class="input-field" id="rev-dias-${idx}" type="number" value="${preset.dias||22}" oninput="calcAll()">
+      </div>
+      <div>
+        <label class="text-xs text-slate-400 block mb-1">Ticket Médio (R$)</label>
+        <input class="input-field" id="rev-ticket-${idx}" type="number" value="${preset.ticket||0}" oninput="calcAll()">
+      </div>
+    </div>
+    <div class="flex items-center justify-between mt-2">
+      <div class="flex items-center gap-2">
+        <label class="text-xs text-slate-400">CPV/CSP Vinculado:</label>
+        <select class="input-field text-xs" id="rev-cpv-tipo-${idx}" onchange="calcAll()" style="max-width:120px">
+          <option value="pct">Percentual</option>
+          <option value="fixo">Valor Fixo/unid</option>
+        </select>
+        <input class="input-field text-xs" id="rev-cpv-val-${idx}" type="number" value="0" step="0.1" oninput="calcAll()" style="max-width:80px">
+        <span class="text-xs text-slate-400" id="rev-cpv-unit-${idx}">%</span>
+      </div>
+      <span class="text-xs font-semibold text-green-600" id="rev-receita-${idx}">R$ 0,00/mês</span>
+    </div>
+  `;
+  wrap.appendChild(div);
+  calcAll();
+}
+
+function removeRevLine(idx) {
+  const el = document.getElementById(`rev-line-${idx}`);
+  if (el) el.remove();
+  revenues = revenues.filter(r => r.id !== idx);
+  calcAll();
+}
+
+function addCMVLine() {
+  const idx = cmvLines.length;
+  cmvLines.push({ id: idx });
+  const wrap = document.getElementById('cmv-lines');
+  const div = document.createElement('div');
+  div.className = 'flex items-center gap-2 mb-2';
+  div.id = `cmv-line-${idx}`;
+  div.innerHTML = `
+    <input class="input-field flex-1" id="cmv-desc-${idx}" placeholder="Categoria (ex: Insumos)" oninput="calcAll()">
+    <div class="input-prefix" data-prefix="R$"><input class="input-field" id="cmv-val-${idx}" type="number" placeholder="0" oninput="calcAll()" style="max-width:140px"></div>
+    ${idx > 0 ? `<button class="text-red-400 text-xs hover:text-red-600" onclick="document.getElementById('cmv-line-${idx}').remove();calcAll()">✕</button>` : ''}
+  `;
+  wrap.appendChild(div);
+}
+
+// ==================== CALCULATIONS ====================
+function getVal(id) {
+  const el = document.getElementById(id);
+  return el ? (parseFloat(el.value) || 0) : 0;
+}
+
+function calcSimples(fat, rbt12, anexo) {
+  if (!fat) return 0;
+  const tabela = SIMPLES_TABELA[anexo] || SIMPLES_TABELA['III'];
+  const rb = rbt12 || fat * 12;
+  let aliq = 0, ded = 0;
+  for (const [limite, a, d] of tabela) {
+    if (rb <= limite) { aliq = a; ded = d; break; }
+  }
+  if (!aliq) { aliq = 33; ded = 648000; }
+  const efetiva = ((rb * (aliq / 100) - ded) / rb) * 100;
+  return Math.max(0, efetiva);
+}
+
+function calcAll() {
+  const regime = document.getElementById('regime')?.value || 'simples';
+  const taxaCartao = getVal('taxa-cartao');
+  const anexo = document.getElementById('anexo')?.value || 'III';
+  const rbt12 = getVal('rbt12');
+
+  // Revenue lines
+  let fatBruto = 0;
+  let cmvLinked = 0;
+  const revIds = [...document.querySelectorAll('[id^="rev-qtt-"]')].map(el => el.id.replace('rev-qtt-', ''));
+  revIds.forEach(idx => {
+    const qtt = getVal(`rev-qtt-${idx}`);
+    const dias = getVal(`rev-dias-${idx}`);
+    const ticket = getVal(`rev-ticket-${idx}`);
+    const receita = qtt * dias * ticket;
+    fatBruto += receita;
+    const el = document.getElementById(`rev-receita-${idx}`);
+    if (el) el.textContent = 'R$ ' + fmt(receita) + '/mês';
+    const cpvTipo = document.getElementById(`rev-cpv-tipo-${idx}`)?.value || 'pct';
+    const cpvVal = getVal(`rev-cpv-val-${idx}`);
+    const unit = document.getElementById(`rev-cpv-unit-${idx}`);
+    if (unit) unit.textContent = cpvTipo === 'pct' ? '%' : 'R$/un';
+    if (cpvTipo === 'pct') cmvLinked += receita * cpvVal / 100;
+    else cmvLinked += qtt * dias * cpvVal;
+  });
+
+  // Fat total display
+  const fatEl = document.getElementById('fat-total');
+  if (fatEl) fatEl.textContent = 'R$ ' + fmt(fatBruto);
+
+  // Alíquota
+  let aliquota = 0;
+  if (regime === 'simples') {
+    aliquota = calcSimples(fatBruto, rbt12, anexo);
+    const aliqEl = document.getElementById('aliquota');
+    if (aliqEl) { aliqEl.value = aliquota.toFixed(2); aliqEl.readOnly = true; }
+  } else if (regime === 'lucro_presumido') {
+    aliquota = 13.33;
+    const aliqEl = document.getElementById('aliquota');
+    if (aliqEl) { aliqEl.value = aliquota.toFixed(2); aliqEl.readOnly = true; }
+  } else if (regime === 'mei') {
+    aliquota = 5.0;
+    const aliqEl = document.getElementById('aliquota');
+    if (aliqEl) { aliqEl.value = aliquota.toFixed(2); aliqEl.readOnly = true; }
+  } else {
+    aliquota = getVal('aliquota');
+    const aliqEl = document.getElementById('aliquota');
+    if (aliqEl) aliqEl.readOnly = false;
+  }
+
+  const impostos = fatBruto * (aliquota / 100) + fatBruto * (taxaCartao / 100);
+  const receitaLiq = fatBruto - impostos;
+
+  // CMV manual
+  let cmvManual = 0;
+  const cmvIds = [...document.querySelectorAll('[id^="cmv-val-"]')].map(el => el.id.replace('cmv-val-', ''));
+  cmvIds.forEach(idx => { cmvManual += getVal(`cmv-val-${idx}`); });
+
+  // Royalties etc
+  const royalties = fatBruto * getVal('royalties') / 100;
+  const fundoProp = fatBruto * getVal('fundo-prop') / 100;
+  const comissoes = fatBruto * getVal('comissoes') / 100;
+
+  const totalCustoVar = cmvLinked + cmvManual + royalties + fundoProp + comissoes;
+  const margemContrib = receitaLiq - totalCustoVar;
+
+  // Folha
+  const salarios = getVal('salarios');
+  const mult = parseFloat(document.getElementById('multiplicador')?.value || 1.7);
+  const folhaTotal = salarios * mult;
+  const custo = document.getElementById('custo-total-folha');
+  if (custo) custo.textContent = `Custo Total Projetado: R$ ${fmt(folhaTotal)}`;
+
+  // Fixos
+  const aluguel = getVal('aluguel');
+  const condo = getVal('condo');
+  const fundoShop = fatBruto * getVal('fundo-shopping') / 100;
+  const financ = getVal('financiamento');
+  const manut = getVal('manutencao');
+
+  let opFix = 0;
+  [...OP_EXPENSES_LEFT, ...OP_EXPENSES_RIGHT].forEach(e => {
+    const fix = getVal(`${e.id}-fix`);
+    const pct = getVal(`${e.id}-pct`);
+    opFix += fix || (fatBruto * pct / 100);
+  });
+
+  const totalFixos = aluguel + condo + fundoShop + financ + manut + opFix;
+  const lucroLiq = margemContrib - folhaTotal - totalFixos;
+
+  // PE
+  const pctVar = fatBruto > 0 ? totalCustoVar / fatBruto : 0;
+  const margemContribPct = fatBruto > 0 ? (receitaLiq - totalCustoVar) / fatBruto : 0;
+  const custoFixoTotal = folhaTotal + totalFixos;
+  const pe = margemContribPct > 0 ? custoFixoTotal / margemContribPct : 0;
+
+  // Update bottom bar
+  const barLucro = document.getElementById('bar-lucro');
+  const barPE = document.getElementById('bar-pe');
+  if (barLucro) barLucro.textContent = 'R$ ' + fmt(lucroLiq);
+  if (barPE) barPE.textContent = 'R$ ' + fmt(pe);
+
+  // Color
+  if (barLucro) barLucro.className = `font-bold text-lg ${lucroLiq >= 0 ? 'text-green-600' : 'text-red-500'}`;
+
+  // DRE Preview (step 5)
+  renderDREPreview({ fatBruto, impostos, totalCustoVar, margemContrib, folhaTotal, totalFixos, lucroLiq, capex: getVal('capex'), pe });
+
+  // Store for result page
+  window.__dre = { fatBruto, impostos, receitaLiq, cmvLinked, cmvManual, royalties, fundoProp, comissoes, totalCustoVar, margemContrib, folhaTotal, totalFixos, lucroLiq, pe, capex: getVal('capex'), aliquota, taxaCartao };
+}
+
+function renderDREPreview(d) {
+  const el = document.getElementById('dre-preview');
+  if (!el) return;
+  const rows = [
+    ['Receita Bruta Total', d.fatBruto, '100%', false],
+    ['Impostos e Taxas', -d.impostos, null, false],
+    ['Custos Variáveis (CMV, Franquia, Prêmios)', -d.totalCustoVar, null, false],
+    ['Margem de Contribuição', d.margemContrib, d.fatBruto > 0 ? pct(d.margemContrib, d.fatBruto) : '—', true],
+    ['Folha de Pagamento', -d.folhaTotal, null, false],
+    ['Custos Fixos e Operacionais', -d.totalFixos, null, false],
+    ['Lucro Líquido Projetado', d.lucroLiq, d.fatBruto > 0 ? pct(d.lucroLiq, d.fatBruto) : '—', true],
+    ['Investimento Total (CAPEX)', d.capex, null, false],
+    ['Payback Estimado', d.lucroLiq > 0 ? d.capex / d.lucroLiq : 0, 'meses', false],
+  ];
+  el.innerHTML = rows.map(([label, val, extra, bold]) => {
+    let valStr, cls = '';
+    if (label === 'Payback Estimado') {
+      valStr = val > 0 ? val.toFixed(1) + ' meses' : '—';
+      cls = 'text-blue-600 font-bold';
+    } else {
+      valStr = 'R$ ' + fmt(Math.abs(val));
+      if (val < 0) valStr = '-' + valStr;
+      cls = val < 0 ? 'text-red-500' : val > 0 ? 'text-green-700' : 'text-slate-800';
+      if (bold) cls += ' font-bold text-lg';
+    }
+    return `<div class="dre-row ${bold ? 'bold' : ''}">
+      <span class="${bold ? 'font-bold text-slate-800' : 'text-slate-600'}">${label}</span>
+      <span class="text-xs text-slate-400">${extra || ''}</span>
+      <span class="${cls} text-right">${valStr}</span>
+    </div>`;
+  }).join('');
+}
+
+function fmt(v) {
+  return (Math.round(v * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function pct(a, b) { return (a / b * 100).toFixed(2) + '%'; }
+
+// ==================== STEPS ====================
+function goStep(n) {
+  currentStep = n;
+  [1,2,3,4,5].forEach(i => {
+    const s = document.getElementById(`step-${i}`);
+    if (s) s.classList.toggle('hidden', i !== n);
+    const nav = document.getElementById(`snav-${i}`);
+    if (nav) nav.classList.toggle('active', i === n);
+  });
+  const pcts = [20, 40, 60, 80, 100];
+  document.getElementById('step-label').textContent = `Passo ${n} de 5`;
+  document.getElementById('step-pct').textContent = `${pcts[n-1]}% Concluído`;
+  document.getElementById('step-fill').style.width = `${pcts[n-1]}%`;
+
+  const btnPrev = document.getElementById('btn-prev');
+  if (btnPrev) btnPrev.classList.toggle('invisible', n === 1);
+
+  const btnNext = document.getElementById('btn-next');
+  if (btnNext) {
+    if (n === 5) {
+      btnNext.innerHTML = `Ver Resultado <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 8 16 12 12 16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`;
+      btnNext.onclick = showResult;
+    } else {
+      btnNext.innerHTML = `Próximo <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>`;
+      btnNext.onclick = nextStep;
+    }
+  }
+  window.scrollTo(0, 0);
+}
+
+function nextStep() {
+  if (currentStep < 5) goStep(currentStep + 1);
+  else showResult();
+}
+function prevStep() {
+  if (currentStep > 1) goStep(currentStep - 1);
+}
+
+// ==================== RESULT ====================
+function applyScenario(pctDelta, btn) {
+  currentScenarioPct = pctDelta;
+  document.querySelectorAll('.scenario-tag').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderResult();
+}
+
+function showResult() {
+  calcAll();
+  showPage('result');
+  renderResult();
+}
+
+function renderResult() {
+  const d = window.__dre;
+  if (!d) return;
+  const factor = 1 + currentScenarioPct / 100;
+
+  const fatBruto = d.fatBruto * factor;
+  const impostos = d.impostos * factor;
+  const receitaLiq = fatBruto - impostos;
+  const totalCustoVar = d.totalCustoVar * factor;
+  const margemContrib = receitaLiq - totalCustoVar;
+  const folhaTotal = d.folhaTotal;
+  const totalFixos = d.totalFixos;
+  const lucroLiq = margemContrib - folhaTotal - totalFixos;
+  const margemPct = fatBruto > 0 ? lucroLiq / fatBruto * 100 : 0;
+  const mcPct = fatBruto > 0 ? margemContrib / fatBruto * 100 : 0;
+  const custoFixo = folhaTotal + totalFixos;
+  const pe = mcPct > 0 ? custoFixo / (mcPct / 100) : 0;
+  const payback = lucroLiq > 0 && d.capex > 0 ? d.capex / lucroLiq : 0;
+
+  const projName = document.getElementById('proj-name')?.value || 'Projeto';
+  document.getElementById('result-title').textContent = projName;
+  document.getElementById('result-subtitle').textContent = document.getElementById('proj-area')?.value || '';
+
+  document.getElementById('kpi-lucro').textContent = 'R$ ' + fmt(lucroLiq);
+  document.getElementById('kpi-lucro').className = `text-3xl font-bold mt-1 ${lucroLiq >= 0 ? 'text-green-600' : 'text-red-500'}`;
+  document.getElementById('kpi-margem').textContent = `Margem: ${margemPct.toFixed(1)}%`;
+  document.getElementById('kpi-marg').textContent = margemPct.toFixed(1) + '%';
+  document.getElementById('kpi-pe').textContent = 'R$ ' + fmt(pe);
+  document.getElementById('kpi-payback').textContent = payback > 0 ? payback.toFixed(1) + ' meses' : '—';
+  document.getElementById('kpi-mc').textContent = 'R$ ' + fmt(margemContrib);
+  document.getElementById('kpi-mc-pct').textContent = `${mcPct.toFixed(1)}% do faturamento bruto`;
+
+  // DRE Detail
+  const dreRows = [
+    { label: '1. Receita Bruta de Vendas', pct: 100, val: fatBruto, bold: false },
+    { label: '    (-) Impostos e Taxas (Cartão)', pct: -(impostos/fatBruto*100), val: -impostos, sub: true },
+    { label: '2. Receita Líquida', pct: receitaLiq/fatBruto*100, val: receitaLiq, bold: true },
+    { label: '    (-) Custo de Insumos/Mercadorias', pct: -(totalCustoVar/fatBruto*100), val: -totalCustoVar, sub: true },
+    { label: '    (-) Total de Custos Variáveis', pct: -(totalCustoVar/fatBruto*100), val: -totalCustoVar, sub: true },
+    { label: '3. Margem de Contribuição', pct: mcPct, val: margemContrib, bold: true },
+    { label: '    (-) Folha de Pagamento', pct: -(folhaTotal/fatBruto*100), val: -folhaTotal, sub: true },
+    { label: '    (-) Custos Fixos e Operacionais', pct: -(totalFixos/fatBruto*100), val: -totalFixos, sub: true },
+    { label: '4. Lucro Líquido', pct: margemPct, val: lucroLiq, bold: true, highlight: true },
+  ];
+  const dreEl = document.getElementById('dre-detail');
+  dreEl.innerHTML = dreRows.map(r => {
+    const pctStr = isNaN(r.pct) ? '' : r.pct.toFixed(1) + '%';
+    const valCls = r.val < 0 ? 'text-red-500' : r.val > 0 ? (r.highlight ? 'text-green-600' : 'text-green-700') : 'text-slate-600';
+    const valStr = 'R$ ' + fmt(Math.abs(r.val));
+    return `<div class="dre-row ${r.bold ? 'bold' : ''} ${r.highlight ? 'highlight' : ''}">
+      <span class="${r.bold ? 'font-bold' : 'text-slate-500 text-xs'}">${r.label}</span>
+      <span class="text-xs text-slate-400 text-right">${pctStr}</span>
+      <span class="${valCls} text-right font-${r.bold ? 'bold' : 'medium'}">${r.val < 0 ? '-' : ''}${valStr}</span>
+    </div>`;
+  }).join('');
+
+  // Donut chart
+  const labels = ['Impostos', 'Custos Variáveis', 'Folha', 'Fixos', 'Lucro Líquido'];
+  const data = [impostos, totalCustoVar, folhaTotal, totalFixos, Math.max(0, lucroLiq)];
+  const colors = ['#f97316','#f59e0b','#8b5cf6','#3b82f6','#16a34a'];
+
+  if (donutChart) donutChart.destroy();
+  const ctx = document.getElementById('donut-chart').getContext('2d');
+  donutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+    options: { plugins: { legend: { display: false } }, cutout: '60%' }
+  });
+
+  document.getElementById('chart-legend').innerHTML = labels.map((l, i) => `
+    <div class="flex items-center justify-between text-xs">
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-sm" style="background:${colors[i]}"></div>
+        <span class="text-slate-600">${l}</span>
+      </div>
+      <span class="font-semibold text-slate-800">${fmt(data[i])}</span>
+    </div>
+  `).join('');
+
+  // Payback chart
+  if (d.capex > 0 && lucroLiq > 0) {
+    document.getElementById('payback-section').classList.remove('hidden');
+    const months = Math.ceil(payback) + 3;
+    const mLabels = Array.from({length: months}, (_, i) => `M${i+1}`);
+    const accumulated = mLabels.map((_, i) => (i + 1) * lucroLiq - d.capex);
+    if (paybackChart) paybackChart.destroy();
+    const ctx2 = document.getElementById('payback-chart').getContext('2d');
+    paybackChart = new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: mLabels,
+        datasets: [{
+          label: 'Lucro Acumulado (R$)',
+          data: accumulated,
+          backgroundColor: accumulated.map(v => v >= 0 ? '#16a34a33' : '#ef444433'),
+          borderColor: accumulated.map(v => v >= 0 ? '#16a34a' : '#ef4444'),
+          borderWidth: 1.5
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { grid: { color: '#f1f5f9' }, ticks: { callback: v => 'R$ ' + (v/1000).toFixed(0) + 'k' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  } else {
+    document.getElementById('payback-section').classList.add('hidden');
+  }
+}
+
+// ==================== PAGES ====================
+function showPage(page) {
+  ['home','sim','result','projects','compare'].forEach(p => {
+    const el = document.getElementById(`page-${p}`);
+    if (el) el.classList.toggle('hidden', p !== page);
+  });
+  ['home','sim','projects','compare'].forEach(p => {
+    const nav = document.getElementById(`nav-${p}`);
+    if (nav) nav.classList.toggle('active', p === page || (page === 'result' && p === 'sim'));
+  });
+  document.querySelector('.bottom-bar')?.classList.toggle('hidden', page !== 'sim');
+  if (page === 'projects') renderProjects();
+  if (page === 'compare') renderCompare();
+  if (page === 'home') renderHomeRecent();
+  if (page === 'sim') {
+    document.querySelector('.bottom-bar')?.classList.remove('hidden');
+    goStep(currentStep);
+  }
+}
+
+function startSim(type) {
+  const preset = PRESETS[type] || PRESETS.padrao;
+  // reset
+  revenues = [];
+  cmvLines = [];
+  document.getElementById('revenue-lines').innerHTML = '';
+  document.getElementById('cmv-lines').innerHTML = '';
+  addRevenueLine(preset);
+  addCMVLine();
+  currentStep = 1;
+  showPage('sim');
+  goStep(1);
+}
+
+// ==================== SAVE / LOAD ====================
+function saveProject() {
+  calcAll();
+  const name = document.getElementById('proj-name')?.value;
+  if (!name) { alert('Por favor, informe o Nome do Projeto antes de salvar.'); return; }
+  const projects = JSON.parse(localStorage.getItem('dre-projects') || '[]');
+  const id = Date.now();
+  const d = window.__dre;
+  projects.unshift({ id, name, area: document.getElementById('proj-area')?.value || '', date: new Date().toLocaleDateString('pt-BR'), lucro: d?.lucroLiq || 0, margem: d?.fatBruto > 0 ? d.lucroLiq / d.fatBruto * 100 : 0, fatBruto: d?.fatBruto || 0 });
+  localStorage.setItem('dre-projects', JSON.stringify(projects.slice(0, 20)));
+  alert(`Projeto "${name}" salvo com sucesso!`);
+  renderHomeRecent();
+}
+
+function renderProjects() {
+  const projects = JSON.parse(localStorage.getItem('dre-projects') || '[]');
+  const el = document.getElementById('projects-list');
+  if (!projects.length) {
+    el.innerHTML = `<div class="card p-12 text-center text-slate-400">
+      <div class="text-4xl mb-3">📂</div>
+      <div>Nenhum projeto salvo ainda.</div>
+      <button class="btn-primary mx-auto mt-4" onclick="startSim('padrao')">Criar primeira simulação</button>
+    </div>`;
+    return;
+  }
+  el.innerHTML = `<div class="grid grid-cols-3 gap-4">${projects.map(p => `
+    <div class="project-card">
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="font-semibold text-slate-800">${p.name}</div>
+          <div class="text-xs text-slate-400 mt-0.5">${p.area || '—'} · ${p.date}</div>
+        </div>
+        <span class="${p.lucro >= 0 ? 'badge-green' : 'badge-red'}">${p.margem?.toFixed(1) || 0}%</span>
+      </div>
+      <div class="mt-3 flex justify-between text-sm">
+        <div><div class="text-xs text-slate-400">Fat. Bruto</div><div class="font-semibold">R$ ${fmt(p.fatBruto)}</div></div>
+        <div class="text-right"><div class="text-xs text-slate-400">Lucro Líquido</div><div class="font-semibold ${p.lucro >= 0 ? 'text-green-600' : 'text-red-500'}">R$ ${fmt(p.lucro)}</div></div>
+      </div>
+    </div>
+  `).join('')}</div>`;
+}
+
+function renderHomeRecent() {
+  const projects = JSON.parse(localStorage.getItem('dre-projects') || '[]');
+  const el = document.getElementById('home-recent');
+  if (!el) return;
+  if (!projects.length) {
+    el.innerHTML = `<div class="card p-8 text-center text-slate-400"><div class="text-3xl mb-2">📂</div><div>Nenhum projeto salvo ainda.</div></div>`;
+    return;
+  }
+  const recent = projects.slice(0, 3);
+  el.innerHTML = `<div class="grid grid-cols-3 gap-4">${recent.map(p => `
+    <div class="project-card">
+      <div class="font-semibold text-slate-800">${p.name}</div>
+      <div class="text-xs text-slate-400">${p.date}</div>
+      <div class="mt-2 flex justify-between text-sm">
+        <span class="text-slate-500">Fat. Bruto: <strong>R$ ${fmt(p.fatBruto)}</strong></span>
+        <span class="${p.lucro >= 0 ? 'text-green-600' : 'text-red-500'} font-semibold">R$ ${fmt(p.lucro)}</span>
+      </div>
+    </div>
+  `).join('')}</div>`;
+}
+
+function renderCompare() {
+  const projects = JSON.parse(localStorage.getItem('dre-projects') || '[]');
+  const el = document.getElementById('compare-content');
+  if (projects.length < 2) {
+    el.innerHTML = `<div class="card p-12 text-center text-slate-400"><div class="text-4xl mb-3">📊</div><div>Salve pelo menos 2 projetos para comparar.</div></div>`;
+    return;
+  }
+  const metrics = [
+    { label: 'Faturamento Bruto', key: 'fatBruto', format: v => 'R$ ' + fmt(v) },
+    { label: 'Lucro Líquido', key: 'lucro', format: v => 'R$ ' + fmt(v) },
+    { label: 'Margem Líquida', key: 'margem', format: v => v?.toFixed(1) + '%' },
+  ];
+  const top = projects.slice(0, 4);
+  el.innerHTML = `
+    <div class="card overflow-hidden">
+      <table class="w-full text-sm">
+        <thead><tr class="border-b border-slate-200 bg-slate-50">
+          <th class="p-4 text-left text-slate-500 font-semibold">Métrica</th>
+          ${top.map(p => `<th class="p-4 text-right text-slate-800 font-semibold">${p.name}</th>`).join('')}
+        </tr></thead>
+        <tbody>${metrics.map(m => `
+          <tr class="border-b border-slate-100 hover:bg-slate-50">
+            <td class="p-4 text-slate-500">${m.label}</td>
+            ${top.map(p => `<td class="p-4 text-right font-semibold ${m.key === 'lucro' ? (p[m.key] >= 0 ? 'text-green-600' : 'text-red-500') : 'text-slate-800'}">${m.format(p[m.key])}</td>`).join('')}
+          </tr>
+        `).join('')}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function exportPDF() { window.print(); }
+
+// ==================== SHOPPING TOGGLE ====================
+document.getElementById('shopping-toggle')?.addEventListener('change', function() {
+  document.getElementById('shopping-extras').classList.toggle('hidden', !this.checked);
+});
+
+// ==================== BOOT ====================
+init();
+calcAll();
+</script>
+</body>
+</html>
